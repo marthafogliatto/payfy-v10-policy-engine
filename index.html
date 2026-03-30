@@ -4446,6 +4446,7 @@ document.addEventListener('keydown', function(e) {
     closeSlideover();
     closeSidebars();
     document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+    closeCCPropagate();
     document.getElementById('agentDropdown').style.display = 'none';
     document.getElementById('fabDrawer').classList.remove('open');
   }
@@ -5084,13 +5085,9 @@ function updateInheritanceChain() {
 // V8 FEATURE 7: Impact Preview Modal
 // ========================================================================
 function handleSlideoverSave() {
-  // Check if we're editing a CC-scoped exception (not Geral)
-  // For prototype: always show CC propagation preview for CC-scoped content
-  var slideoverTitle = document.querySelector('.slideover-title');
-  var titleText = slideoverTitle ? slideoverTitle.textContent : '';
-  // Show CC propagation preview for any save (in production, only for CC exceptions)
   closeSlideover();
-  openCCPropagate();
+  // Delay to let slideover close animation finish before showing modal
+  setTimeout(function() { openCCPropagate(); }, 350);
 }
 
 function openImpactModal() {
@@ -5264,13 +5261,16 @@ function closePropagateModal() {
 
 // V9 M3 Enhanced: CC Exception Propagation
 function openCCPropagate() {
+  var modal = document.getElementById('ccPropagateModal');
+  if (!modal) return;
   document.getElementById('ccPropagateCheck').checked = false;
   document.getElementById('ccPropagateDetails').style.display = 'none';
   document.getElementById('ccPropagateBtn').textContent = 'Salvar exceção';
-  document.getElementById('ccPropagateModal').style.display = 'flex';
+  modal.style.cssText = 'display:flex !important; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:1100;';
 }
 function closeCCPropagate() {
-  document.getElementById('ccPropagateModal').style.display = 'none';
+  var modal = document.getElementById('ccPropagateModal');
+  if (modal) modal.style.cssText = 'display:none;';
 }
 function togglePropagateDetails() {
   var checked = document.getElementById('ccPropagateCheck').checked;
