@@ -979,6 +979,34 @@ function openSlideover(idx) {
   h += '<div class="detail-item"><div class="detail-label">Categoria</div><div class="detail-value">' + e.cat + '</div></div>';
   h += '</div></div>';
 
+  // Custom Fields section
+  h += '<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--gray-200);">';
+  h += '<div style="font-size:12px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;">Campos Customizáveis</div>';
+
+  // Field 1: Código do Projeto
+  var projCodes = {'Uber Centro':'PROJ-2024-OPS','Restaurante Bistrô':'PROJ-2024-MKT','Material Escritório':'PROJ-2024-ADM','iFood':'PROJ-2024-MKT','Hotel Ibis':'PROJ-2024-VIG','Decolar':'PROJ-2024-VIG'};
+  var projCode = projCodes[e.vendor] || 'PROJ-2024-' + String(idx).padStart(3,'0');
+  var isAISuggested = ['Restaurante Bistrô','iFood','Hotel Ibis'].indexOf(e.vendor) !== -1;
+  h += '<div style="margin-bottom:12px;"><div style="font-size:13px;font-weight:500;color:var(--gray-700);margin-bottom:4px;">Código do Projeto <span style="color:#DC2626;">*</span></div>';
+  h += '<div style="padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:14px;color:var(--gray-800);background:var(--white);">' + projCode + '</div>';
+  if (isAISuggested) h += '<div style="font-size:12px;color:#16A34A;margin-top:4px;">🤖 Sugerido pela IA (confiança: 91%)</div>';
+  h += '</div>';
+
+  // Field 2: Centro de Lucro
+  var lucroCenters = {'Uber Centro':'Operações','Restaurante Bistrô':'Marketing','Material Escritório':'Administrativo','iFood':'Marketing','Hotel Ibis':'Operações','Decolar':'Comercial'};
+  var lucro = lucroCenters[e.vendor] || 'Tecnologia';
+  h += '<div style="margin-bottom:12px;"><div style="font-size:13px;font-weight:500;color:var(--gray-700);margin-bottom:4px;">Centro de Lucro</div>';
+  h += '<div style="padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:14px;color:var(--gray-800);background:var(--white);">' + lucro + '</div>';
+  h += '</div>';
+
+  // Field 3: Aprovação Especial
+  var needsApproval = e.value > 5000;
+  h += '<div style="margin-bottom:12px;"><div style="font-size:13px;font-weight:500;color:var(--gray-700);margin-bottom:4px;">Aprovação Especial Necessária? <span style="color:#DC2626;">*</span></div>';
+  h += '<div style="padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:14px;color:var(--gray-800);background:var(--white);">' + (needsApproval ? 'Sim' : 'Não') + '</div>';
+  h += '</div>';
+
+  h += '</div>';
+
   document.getElementById('soBody').innerHTML = h;
   document.getElementById('slideoverOverlay').classList.add('active');
   document.getElementById('slideover').classList.add('open');
