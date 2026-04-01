@@ -2761,6 +2761,9 @@ select.form-input {
           <div class="filter-chips" id="filterChipsBar" style="display:none;"></div>
         </div>
 
+        <!-- Active Filters Bar (shown above content when filters are active) -->
+        <div id="activeFiltersBar" style="display:none; margin-bottom:var(--spacing-md); padding:var(--spacing-sm) var(--spacing-md); background:var(--primary-orange-light); border:1px solid #FDBA74; border-radius:var(--radius-lg); font-size:13px; color:var(--gray-700); align-items:center; gap:var(--spacing-sm); flex-wrap:wrap;"></div>
+
         <!-- CARDS VIEW -->
         <div id="cardsView" class="accordion-list">
 
@@ -4310,7 +4313,10 @@ function toggleAccordion(card) {
 }
 
 // View toggle
+var currentView = 'cards';
+
 function switchView(view) {
+  currentView = view;
   document.querySelectorAll('.view-toggle-btn').forEach(btn => {
     btn.classList.remove('active');
     btn.setAttribute('aria-checked', 'false');
@@ -4326,12 +4332,14 @@ function switchView(view) {
     document.getElementById('tableView').style.display = '';
     document.querySelectorAll('.view-toggle-btn')[1].classList.add('active');
     document.querySelectorAll('.view-toggle-btn')[1].setAttribute('aria-checked', 'true');
+    applyTableFilters();
   } else if (view === 'matrix') {
     document.getElementById('matrixView').style.display = '';
     document.querySelectorAll('.view-toggle-btn')[2].classList.add('active');
     document.querySelectorAll('.view-toggle-btn')[2].setAttribute('aria-checked', 'true');
     renderMatrix();
   }
+  updateActiveFiltersBar();
 }
 
 function setAgentMode(mode) {
@@ -4848,6 +4856,11 @@ function applyTableFilters() {
     row.style.display = show ? '' : 'none';
   });
   updateTableFooter();
+  // Also re-render matrix if matrix view is active
+  if (currentView === 'matrix') {
+    renderMatrix();
+  }
+  updateActiveFiltersBar();
 }
 
 // Close multi-filter dropdowns on outside click
@@ -5266,15 +5279,37 @@ var matrixData = {
 
 function renderMatrix() {
   var container = document.getElementById('matrixContainer');
+
+  // Filter CCs based on selectedCCs and selectedTimes
+  var filteredCCs = matrixData.ccs;
+  if (selectedCCs.length > 0) {
+    filteredCCs = matrixData.ccs.filter(function(cc) {
+      return selectedCCs.indexOf(cc) >= 0;
+    });
+  }
+  if (selectedTimes.length > 0) {
+    // Only show CCs that contain at least one selected team
+    filteredCCs = filteredCCs.filter(function(cc) {
+      var teams = ccTeamsMap[cc] || [];
+      return teams.some(function(t) { return selectedTimes.indexOf(t) >= 0; });
+    });
+  }
+
+  // Empty state
+  if (filteredCCs.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:var(--spacing-2xl);color:var(--gray-500);"><div style="font-size:24px;margin-bottom:var(--spacing-sm);">🔍</div><div style="font-size:14px;font-weight:500;">Nenhum centro de custo corresponde aos filtros selecionados</div><div style="font-size:13px;margin-top:var(--spacing-xs);">Ajuste os filtros de CC ou Time para visualizar a matriz.</div></div>';
+    return;
+  }
+
   var html = '<table class="matrix-table"><thead><tr><th>Fluxo / CC</th>';
-  matrixData.ccs.forEach(function(cc) {
+  filteredCCs.forEach(function(cc) {
     html += '<th class="matrix-cc-header" onclick="showScopePopover(event,\'cc\',\'' + cc + '\')">' + cc + '</th>';
   });
   html += '</tr></thead><tbody>';
 
   matrixData.flows.forEach(function(flow) {
     html += '<tr><td>' + flow + '</td>';
-    matrixData.ccs.forEach(function(cc) {
+    filteredCCs.forEach(function(cc) {
       var key = flow + '|' + cc;
       var exc = matrixData.exceptions[key];
       if (exc) {
@@ -5626,15 +5661,49 @@ function runSimulationV9() {
   document.getElementById('simResultContent').innerHTML = contentHtml;
 }
 
+// ========================================================================
+// Active Filters Bar + Filter Badge
+// ========================================================================
+function updateActiveFiltersBar() {
+  var bar = document.getElementById('activeFiltersBar');
+  var totalFilters = selectedCCs.length + selectedTimes.length;
+
+  // Update the "+ Filtros" button badge
+  var filtersBtn = document.getElementById('toggleFiltersBtn');
+  var isOpen = document.getElementById('secondaryFilters').style.display !== 'none';
+  if (totalFilters > 0) {
+    filtersBtn.textContent = (isOpen ? '- ' : '+ ') + 'Filtros (' + totalFilters + ')';
+  } else {
+    filtersBtn.textContent = isOpen ? '- Filtros' : '+ Filtros';
+  }
+
+  if (totalFilters === 0) {
+    bar.style.display = 'none';
+    return;
+  }
+
+  bar.style.display = 'flex';
+  var html = '<span style="font-weight:600;">Filtros ativos:</span> ';
+  selectedCCs.forEach(function(cc) {
+    html += '<span class="filter-chip">CC: ' + cc + ' <span class="filter-chip-remove" onclick="removeCCFilter(\'' + cc + '\')">&#10005;</span></span>';
+  });
+  selectedTimes.forEach(function(t) {
+    html += '<span class="filter-chip">Time: ' + t + ' <span class="filter-chip-remove" onclick="removeTimeFilter(\'' + t + '\')">&#10005;</span></span>';
+  });
+  html += '<button class="filter-clear-all" onclick="clearAllFilters()">Limpar todos</button>';
+  bar.innerHTML = html;
+}
+
 function toggleSecondaryFilters() {
   var el = document.getElementById('secondaryFilters');
   var btn = document.getElementById('toggleFiltersBtn');
+  var totalFilters = selectedCCs.length + selectedTimes.length;
   if (el.style.display === 'none') {
     el.style.display = 'flex';
-    btn.textContent = '- Filtros';
+    btn.textContent = totalFilters > 0 ? '- Filtros (' + totalFilters + ')' : '- Filtros';
   } else {
     el.style.display = 'none';
-    btn.textContent = '+ Filtros';
+    btn.textContent = totalFilters > 0 ? '+ Filtros (' + totalFilters + ')' : '+ Filtros';
   }
 }
 </script>
